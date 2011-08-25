@@ -22,18 +22,18 @@
 // ITK
 #include "itkCastImageFilter.h"
 #include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkRegionOfInterestImageFilter.h"
+//#include "itkImageFileWriter.h"
+//#include "itkRegionOfInterestImageFilter.h"
 #include "itkVector.h"
 
 // Qt
 #include <QFileDialog>
 #include <QIcon>
+#include <QTextEdit>
 
 // VTK
 #include <vtkActor.h>
 #include <vtkActor2D.h>
-//#include <vtkCommand.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
@@ -59,6 +59,23 @@
 #include "Helpers.h"
 #include "Types.h"
 
+
+void Form::on_actionHelp_activated()
+{
+  QTextEdit* help=new QTextEdit();
+
+  help->setReadOnly(true);
+  help->append("<h1>Interaction</h1>\
+  Hold the right mouse button and drag to zoom in and out. <br/>\
+  Hold the middle mouse button and drag to pan the image. <p/>\
+  <h1>Selecting correspondences</h1>\
+  Click the left mouse button to select a keypoint.<br/> <p/>\
+  <h1>Saving keypoints</h1>\
+  The same number of keypoints must be selected in both the images before the points can be saved."
+  );
+  help->show();
+}
+
 // Constructor
 Form::Form()
 {
@@ -75,22 +92,32 @@ Form::Form()
   
   this->Image2Actor = vtkSmartPointer<vtkImageActor>::New();
   this->Image2Data = vtkSmartPointer<vtkImageData>::New();
-  
-  // Setup toolbar
+
+  // Setup icons
+  QIcon saveIcon = QIcon::fromTheme("document-save");
   QIcon openIcon = QIcon::fromTheme("document-open");
+
+  // Setup left toolbar
+  //toolBar_Left->setAllowedAreas(Qt::LeftToolBarArea);
+  //toolBar_Left->setOrientation(Qt::Vertical);
+  //this->addToolBar(Qt::LeftToolBarArea, toolBar_Left );
+  
   actionOpenImage1->setIcon(openIcon);
-  this->toolBar->addAction(actionOpenImage1);
+  this->toolBar_Left->addAction(actionOpenImage1);
+  
+  actionSaveImage1Points->setIcon(saveIcon);
+  this->toolBar_Left->addAction(actionSaveImage1Points);
+  
+  // Setup right toolbar
+  //toolBar_Right->setAllowedAreas(Qt::RightToolBarArea);
   
   actionOpenImage2->setIcon(openIcon);
-  this->toolBar->addAction(actionOpenImage2);
+  this->toolBar_Right->addAction(actionOpenImage2);
   
-  QIcon saveIcon = QIcon::fromTheme("document-save");
-  actionSaveImage1Points->setIcon(saveIcon);
-  this->toolBar->addAction(actionSaveImage1Points);
-
   actionSaveImage2Points->setIcon(saveIcon);
-  this->toolBar->addAction(actionSaveImage2Points);
+  this->toolBar_Right->addAction(actionSaveImage2Points);
 
+  // Initialize
   this->Image1SelectionStyle2D = NULL;
   this->Image2SelectionStyle2D = NULL;
 };

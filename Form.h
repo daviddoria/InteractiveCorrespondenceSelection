@@ -61,24 +61,25 @@ public slots:
   void on_btnDeleteAllImage2_clicked();
   void on_btnDeleteLastImage1_clicked();
   void on_btnDeleteLastImage2_clicked();
+
+  void on_actionHelp_activated();
   
 protected:
 
-  vtkSmartPointer<vtkRenderer> LeftRenderer;
-  vtkSmartPointer<vtkRenderer> RightRenderer;
-  
   // Image1
   FloatVectorImageType::Pointer Image1;
   vtkSmartPointer<vtkImageActor> Image1Actor;
   vtkSmartPointer<vtkImageData> Image1Data;
+  vtkSmartPointer<PointSelectionStyle2D> Image1SelectionStyle2D;
+  vtkSmartPointer<vtkRenderer> LeftRenderer;
   
   // Image2
   FloatVectorImageType::Pointer Image2;
   vtkSmartPointer<vtkImageActor> Image2Actor;
   vtkSmartPointer<vtkImageData> Image2Data;
-  
-  vtkSmartPointer<PointSelectionStyle2D> Image1SelectionStyle2D;
   vtkSmartPointer<PointSelectionStyle2D> Image2SelectionStyle2D;
+  vtkSmartPointer<vtkRenderer> RightRenderer;
+  
 };
 
 #endif // Form_H
