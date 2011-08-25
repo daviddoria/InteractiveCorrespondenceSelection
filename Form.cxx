@@ -25,9 +25,6 @@
 #include "itkImageFileWriter.h"
 #include "itkRegionOfInterestImageFilter.h"
 #include "itkVector.h"
-#include "itkDeformationFieldSource.h"
-#include "itkDeformationFieldTransform.h"
-//#include "itkResampleVectorImageFilter.h"
 
 // Qt
 #include <QFileDialog>
@@ -42,6 +39,7 @@
 #include <vtkInteractorStyleImage.h>
 #include <vtkMath.h>
 #include <vtkPointData.h>
+#include <vtkPointPicker.h>
 #include <vtkProperty2D.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPoints.h>
@@ -67,9 +65,6 @@ Form::Form()
 
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
-
-  std::cout << "Left renderer: " << this->LeftRenderer << std::endl;
-  std::cout << "Right renderer: " << this->RightRenderer << std::endl;
   
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
@@ -79,9 +74,6 @@ Form::Form()
   
   this->FixedImageActor = vtkSmartPointer<vtkImageActor>::New();
   this->FixedImageData = vtkSmartPointer<vtkImageData>::New();
-  
-  this->TransformedImageActor = vtkSmartPointer<vtkImageActor>::New();
-  this->TransformedImageData = vtkSmartPointer<vtkImageData>::New();
   
   // Setup toolbar
   QIcon openIcon = QIcon::fromTheme("document-open");
@@ -94,108 +86,10 @@ Form::Form()
   QIcon saveIcon = QIcon::fromTheme("document-save");
   actionSave->setIcon(saveIcon);
   this->toolBar->addAction(actionSave);
-    
-  this->FixedHandleRepresentation = vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
-  this->FixedHandleRepresentation->GetProperty()->SetColor(1,0,0);
-  this->FixedSeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
-  this->FixedSeedRepresentation->SetHandleRepresentation(this->FixedHandleRepresentation);
-  
-  this->MovingHandleRepresentation = vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
-  this->MovingHandleRepresentation->GetProperty()->SetColor(1,0,0);
-  this->MovingSeedRepresentation = vtkSmartPointer<vtkSeedRepresentation>::New();
-  this->MovingSeedRepresentation->SetHandleRepresentation(this->MovingHandleRepresentation);
+
+  this->FixedPointSelectionStyle2D = NULL;
+  this->MovingPointSelectionStyle2D = NULL;
 };
-
-void Form::on_btnRegister_clicked()
-{
-  if(this->MovingSeedRepresentation->GetNumberOfSeeds() !=
-     this->FixedSeedRepresentation->GetNumberOfSeeds())
-  {
-    std::cerr << "The number of fixed seeds must match the number of moving seeds!" << std::endl;
-    return;
-  }
-  
-  //typedef   itk::Vector< float, 2 >    VectorType;
-  typedef   itk::Vector< double, 2 >    VectorType;
-  typedef   itk::Image< VectorType, 2 >   DeformationFieldType;
-  
-  typedef itk::DeformationFieldSource<DeformationFieldType>  DeformationFieldSourceType;
-  DeformationFieldSourceType::Pointer deformationFieldSource = DeformationFieldSourceType::New();
-  deformationFieldSource->SetOutputSpacing( this->FixedImage->GetSpacing() );
-  deformationFieldSource->SetOutputOrigin(  this->FixedImage->GetOrigin() );
-  deformationFieldSource->SetOutputRegion(  this->FixedImage->GetLargestPossibleRegion() );
-  deformationFieldSource->SetOutputDirection( this->FixedImage->GetDirection() );
-
-  //  Create source and target landmarks.
-  typedef DeformationFieldSourceType::LandmarkContainerPointer   LandmarkContainerPointer;
-  typedef DeformationFieldSourceType::LandmarkContainer          LandmarkContainerType;
-  typedef DeformationFieldSourceType::LandmarkPointType          LandmarkPointType;
-
-  LandmarkContainerType::Pointer fixedLandmarks = LandmarkContainerType::New();
-  LandmarkContainerType::Pointer movingLandmarks = LandmarkContainerType::New();
-
-  LandmarkPointType movingPoint;
-  LandmarkPointType fixedPoint;
-
-  for(vtkIdType i = 0; i < this->FixedSeedRepresentation->GetNumberOfSeeds(); i++)
-    {
-    double fixedPos[3];
-    this->FixedSeedRepresentation->GetSeedDisplayPosition(i, fixedPos);
-    fixedPoint[0] = 40;
-    fixedPoint[1] = 40;
-    fixedLandmarks->InsertElement( i, fixedPoint );
-  
-    double movingPos[3];
-    this->MovingSeedRepresentation->GetSeedDisplayPosition(i, movingPos);
-    movingPoint[0] = 20;
-    movingPoint[1] = 20;
-    movingLandmarks->InsertElement( i, movingPoint );
-    }
-
-  deformationFieldSource->SetSourceLandmarks( movingLandmarks.GetPointer() );
-  deformationFieldSource->SetTargetLandmarks( fixedLandmarks.GetPointer() );
-  deformationFieldSource->UpdateLargestPossibleRegion();
-  
-  //typedef itk::DeformationFieldTransform<float, 2>  DeformationFieldTransformType;
-  typedef itk::DeformationFieldTransform<double, 2>  DeformationFieldTransformType;
-  DeformationFieldTransformType::Pointer deformationFieldTransform = DeformationFieldTransformType::New();
-  deformationFieldTransform->SetDeformationField( deformationFieldSource->GetOutput() );
-
-  /*
-  //typedef itk::ResampleVectorImageFilter<FloatVectorImageType, FloatVectorImageType, float >    VectorResampleFilterType;
-  typedef itk::ResampleVectorImageFilter<FloatVectorImageType, FloatVectorImageType>    VectorResampleFilterType;
-  VectorResampleFilterType::Pointer vectorResampleFilter = VectorResampleFilterType::New();
-  vectorResampleFilter->SetInput( this->MovingImage );
-  vectorResampleFilter->SetTransform( deformationFieldTransform );
-  vectorResampleFilter->SetSize( this->FixedImage->GetLargestPossibleRegion().GetSize() );
-  vectorResampleFilter->SetOutputOrigin(  this->FixedImage->GetOrigin() );
-  vectorResampleFilter->SetOutputSpacing( this->FixedImage->GetSpacing() );
-  vectorResampleFilter->SetOutputDirection( this->FixedImage->GetDirection() );
-  vectorResampleFilter->SetDefaultPixelValue( 200 ); // This is the color which to set portions of the transformed image that do not correspond to the moving image
-  vectorResampleFilter->Update();
-  
-  this->TransformedImage = FloatVectorImageType::New();
-  Helpers::DeepCopyVectorImage<FloatVectorImageType>(vectorResampleFilter->GetOutput(), this->TransformedImage);
-    
-  if(this->chkRGB->isChecked())
-    {
-    Helpers::ITKImagetoVTKRGBImage(this->TransformedImage, this->TransformedImageData);
-    }
-  else
-    {
-    Helpers::ITKImagetoVTKMagnitudeImage(this->TransformedImage, this->TransformedImageData);
-    }
-  
-  this->TransformedImageActor->SetInput(this->TransformedImageData);
-
-  // Add Actor to renderer
-  this->LeftRenderer->AddActor(this->TransformedImageActor);
-  
-  this->qvtkWidgetLeft->GetInteractor()->GetRenderWindow()->Render();
-  this->LeftRenderer->Render();
-  */
-  //this->LeftRenderer->ResetCamera();
-}
 
 void Form::on_actionOpenMovingImage_activated()
 {
@@ -237,18 +131,12 @@ void Form::on_actionOpenMovingImage_activated()
 
   this->RightRenderer->ResetCamera();
 
-  
-  // Seed widget
-  this->MovingSeedWidget = vtkSmartPointer<vtkSeedWidget>::New();
-  this->MovingSeedWidget->SetInteractor(this->qvtkWidgetRight->GetRenderWindow()->GetInteractor());
-  this->MovingSeedWidget->SetRepresentation(this->MovingSeedRepresentation);
-  
-  this->MovingSeedCallback = vtkSmartPointer<vtkSeedCallback>::New();
-  this->MovingSeedCallback->SetWidget(this->MovingSeedWidget);
-  
-  this->MovingSeedWidget->AddObserver(vtkCommand::PlacePointEvent,this->MovingSeedCallback);
-  this->MovingSeedWidget->AddObserver(vtkCommand::InteractionEvent,this->MovingSeedCallback);
-  this->MovingSeedWidget->On();
+  vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
+  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  this->MovingPointSelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
+  this->MovingPointSelectionStyle2D->SetCurrentRenderer(this->RightRenderer);
+  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->MovingPointSelectionStyle2D);
+
 }
 
 void Form::on_actionOpenFixedImage_activated()
@@ -289,58 +177,19 @@ void Form::on_actionOpenFixedImage_activated()
       vtkSmartPointer<vtkInteractorStyleImage>::New();
   this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
 
+
+  vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
+  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  this->FixedPointSelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
+  this->FixedPointSelectionStyle2D->SetCurrentRenderer(this->LeftRenderer);
+  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->FixedPointSelectionStyle2D);
+  
   this->LeftRenderer->ResetCamera();
 
-  std::cout << "Fixed interactor: " << this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor() << std::endl;
-  // Seed widget
-  this->FixedSeedWidget = vtkSmartPointer<vtkSeedWidget>::New();
-  this->FixedSeedWidget->SetInteractor(this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor());
-  this->FixedSeedWidget->SetRepresentation(this->FixedSeedRepresentation);
-  
-  this->FixedSeedCallback = vtkSmartPointer<vtkSeedCallback>::New();
-  this->FixedSeedCallback->SetWidget(this->FixedSeedWidget);
-  
-  this->FixedSeedWidget->AddObserver(vtkCommand::PlacePointEvent,this->FixedSeedCallback);
-  this->FixedSeedWidget->AddObserver(vtkCommand::InteractionEvent,this->FixedSeedCallback);
-  this->FixedSeedWidget->On();
+
 }
 
 void Form::on_actionSave_activated()
 {
-  if(this->chkRGB->isChecked())
-    {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save File", ".", "Image Files (*.png)");
-    std::cout << "Got filename: " << fileName.toStdString() << std::endl;
-    if(fileName.toStdString().empty())
-      {
-      std::cout << "Filename was empty." << std::endl;
-      return;
-      }
-    typedef itk::CastImageFilter< FloatVectorImageType, UnsignedCharVectorImageType > CastFilterType;
-    CastFilterType::Pointer castFilter = CastFilterType::New();
-    castFilter->SetInput(this->TransformedImage);
-    castFilter->Update();
-    
-    typedef  itk::ImageFileWriter< UnsignedCharVectorImageType  > WriterType;
-    WriterType::Pointer writer = WriterType::New();
-    writer->SetFileName(fileName.toStdString());
-    writer->SetInput(castFilter->GetOutput());
-    writer->Update();
-    }
-  else
-    {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save File", ".", "Image Files (*.mhd)");
-    std::cout << "Got filename: " << fileName.toStdString() << std::endl;
-    if(fileName.toStdString().empty())
-      {
-      std::cout << "Filename was empty." << std::endl;
-      return;
-      }
-    typedef  itk::ImageFileWriter< FloatVectorImageType  > WriterType;
-    WriterType::Pointer writer = WriterType::New();
-    writer->SetFileName(fileName.toStdString());
-    writer->SetInput(this->TransformedImage);
-    writer->Update();
-    }
-
+ 
 }

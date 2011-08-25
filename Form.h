@@ -34,7 +34,7 @@
 
 // Custom
 #include "Types.h"
-#include "SeedCallback.h"
+#include "PointSelectionStyle2D.h"
 
 // Forward declarations
 class vtkRenderer;
@@ -55,7 +55,6 @@ public slots:
   void on_actionOpenMovingImage_activated();
   void on_actionOpenFixedImage_activated();
   void on_actionSave_activated();
-  void on_btnRegister_clicked();
 
 protected:
 
@@ -72,13 +71,8 @@ protected:
   vtkSmartPointer<vtkImageActor> MovingImageActor;
   vtkSmartPointer<vtkImageData> MovingImageData;
   
-  // Transformed image
-  FloatVectorImageType::Pointer TransformedImage;
-  vtkSmartPointer<vtkImageActor> TransformedImageActor;
-  vtkSmartPointer<vtkImageData> TransformedImageData;  
-  
-  vtkSmartPointer<vtkPointHandleRepresentation2D> MovingHandleRepresentation;
-  vtkSmartPointer<vtkSeedRepresentation> MovingSeedRepresentation;
+  vtkSmartPointer<PointSelectionStyle2D> FixedPointSelectionStyle2D;
+  vtkSmartPointer<PointSelectionStyle2D> MovingPointSelectionStyle2D;
 };
 
 #endif // Form_H
