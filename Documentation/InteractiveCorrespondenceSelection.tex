@@ -1,0 +1,115 @@
+\documentclass{InsightArticle}
+
+\usepackage[dvips]{graphicx}
+\usepackage{float}
+\usepackage{subfigure}
+
+\usepackage[dvips,
+bookmarks,
+bookmarksopen,
+backref,
+colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
+]{hyperref}
+
+\title{Interactive Image Correspondence Selection}
+
+% 
+% NOTE: This is the last number of the "handle" URL that 
+% The Insight Journal assigns to your paper as part of the
+% submission process. Please replace the number "1338" with
+% the actual handle number that you get assigned.
+%
+\newcommand{\IJhandlerIDnumber}{3233}
+
+% Increment the release number whenever significant changes are made.
+% The author and/or editor can define 'significant' however they like.
+\release{0.00}
+
+% At minimum, give your name and an email address.  You can include a
+% snail-mail address if you like.
+
+\author{David Doria}
+\authoraddress{Rensselaer Polytechnic Institute, Troy NY}
+
+
+\begin{document}
+
+\IJhandlefooter{\IJhandlerIDnumber}
+
+
+\ifpdf
+\else
+   %
+   % Commands for including Graphics when using latex
+   % 
+   \DeclareGraphicsExtensions{.eps,.jpg,.gif,.tiff,.bmp,.png}
+   \DeclareGraphicsRule{.jpg}{eps}{.jpg.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.gif}{eps}{.gif.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.tiff}{eps}{.tiff.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.bmp}{eps}{.bmp.bb}{`convert #1 eps:-}
+   \DeclareGraphicsRule{.png}{eps}{.png.bb}{`convert #1 eps:-}
+\fi
+
+
+\maketitle
+
+
+\ifhtml
+\chapter*{Front Matter\label{front}}
+\fi
+
+\begin{abstract}
+\noindent
+This document presents an application to manually select corresponding points in two images. The functionality is equivalent to Matlab's 'cpselect' function.
+
+\end{abstract}
+
+\IJhandlenote{\IJhandlerIDnumber}
+
+\tableofcontents
+\section{Introduction}
+This document presents an application to manually select corresponding points in two images. The functionality is equivalent to Matlab's 'cpselect' function.
+
+%%%%%%%%%%%%%%%%
+\section{GUI}
+\label{sec:GUI}
+
+\begin{center}
+	\begin{figure}[H]
+  \centering
+		\includegraphics[width=0.6\linewidth]{images/Environment}
+		\caption{Default Environment}
+		\label{fig:Environment}
+	\end{figure}
+\end{center} 
+
+% 
+% \begin{figure}[H]
+% \centering
+% \subfigure[Polar coordinates of normal vector]{
+% \includegraphics[width=0.33\textwidth]{images/polar1}
+% \label{fig:polar}
+% }
+% \subfigure[Hough Transform of $3$ points] {
+% \includegraphics[width=0.33\textwidth]{images/hough3}
+% \label{fig:sinusoid}
+% }
+% \subfigure[Accumulator] {
+% \includegraphics[width=0.25\textwidth]{images/accumulator}
+% \label{fig:accumulator}
+% }
+% \caption{The Hough Transform}
+% \end{figure}
+
+%%%%%%%%%%%%%%%
+% \begin{thebibliography}{9}
+% 
+% 	\bibitem{boykov2006}
+% 	  Yuri Boykov,
+% 	  \emph{Graph Cuts and Efficient N-D Image Segmentation}.
+% 	  International Journal of Computer Vision
+% 	  2006
+% 
+% \end{thebibliography}
+
+\end{document}

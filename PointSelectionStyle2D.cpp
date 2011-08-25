@@ -89,7 +89,6 @@ void PointSelectionStyle2D::AddNumber(double p[3])
   p[2] = 0;
   std::cout << "Adding marker at " << p[0] << " " << p[1] << " " << p[2] << std::endl;
 
-
   // Create the number
   // Create the text
   vtkSmartPointer<vtkCaptionActor2D> captionActor = vtkSmartPointer<vtkCaptionActor2D>::New();
@@ -120,7 +119,6 @@ void PointSelectionStyle2D::AddNumber(double p[3])
   sphereActor->GetProperty()->SetColor( 1, 0, 0 ); // red
 
   this->Points.push_back(sphereActor);
-  //this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor( sphereActor );
-  this->CurrentRenderer->AddViewProp( sphereActor );
 
+  this->CurrentRenderer->AddViewProp( sphereActor );
 }

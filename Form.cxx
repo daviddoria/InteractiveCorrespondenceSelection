@@ -32,7 +32,8 @@
 
 // VTK
 #include <vtkActor.h>
-#include <vtkCommand.h>
+#include <vtkActor2D.h>
+//#include <vtkCommand.h>
 #include <vtkDataSetSurfaceFilter.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
@@ -69,29 +70,64 @@ Form::Form()
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
 
-  this->MovingImageActor = vtkSmartPointer<vtkImageActor>::New();
-  this->MovingImageData = vtkSmartPointer<vtkImageData>::New();
+  this->Image1Actor = vtkSmartPointer<vtkImageActor>::New();
+  this->Image1Data = vtkSmartPointer<vtkImageData>::New();
   
-  this->FixedImageActor = vtkSmartPointer<vtkImageActor>::New();
-  this->FixedImageData = vtkSmartPointer<vtkImageData>::New();
+  this->Image2Actor = vtkSmartPointer<vtkImageActor>::New();
+  this->Image2Data = vtkSmartPointer<vtkImageData>::New();
   
   // Setup toolbar
   QIcon openIcon = QIcon::fromTheme("document-open");
-  actionOpenFixedImage->setIcon(openIcon);
-  this->toolBar->addAction(actionOpenFixedImage);
+  actionOpenImage1->setIcon(openIcon);
+  this->toolBar->addAction(actionOpenImage1);
   
-  actionOpenMovingImage->setIcon(openIcon);
-  this->toolBar->addAction(actionOpenMovingImage);
+  actionOpenImage2->setIcon(openIcon);
+  this->toolBar->addAction(actionOpenImage2);
   
   QIcon saveIcon = QIcon::fromTheme("document-save");
-  actionSave->setIcon(saveIcon);
-  this->toolBar->addAction(actionSave);
+  actionSaveImage1Points->setIcon(saveIcon);
+  this->toolBar->addAction(actionSaveImage1Points);
 
-  this->FixedPointSelectionStyle2D = NULL;
-  this->MovingPointSelectionStyle2D = NULL;
+  actionSaveImage2Points->setIcon(saveIcon);
+  this->toolBar->addAction(actionSaveImage2Points);
+
+  this->Image1SelectionStyle2D = NULL;
+  this->Image2SelectionStyle2D = NULL;
 };
 
-void Form::on_actionOpenMovingImage_activated()
+void Form::on_btnDeleteLastImage1_clicked()
+{
+  this->LeftRenderer->RemoveViewProp( this->Image1SelectionStyle2D->Numbers[this->Image1SelectionStyle2D->Numbers.size() - 1]);
+  this->LeftRenderer->RemoveViewProp( this->Image1SelectionStyle2D->Points[this->Image1SelectionStyle2D->Points.size() - 1]);
+  this->Image1SelectionStyle2D->Numbers.erase(this->Image1SelectionStyle2D->Numbers.end()-1);
+  this->Image1SelectionStyle2D->Points.erase(this->Image1SelectionStyle2D->Points.end()-1);
+  this->Image1SelectionStyle2D->Coordinates.erase(this->Image1SelectionStyle2D->Coordinates.end()-1);
+  this->qvtkWidgetLeft->GetRenderWindow()->Render();
+}
+
+void Form::on_btnDeleteLastImage2_clicked()
+{
+  this->RightRenderer->RemoveViewProp( this->Image2SelectionStyle2D->Numbers[this->Image2SelectionStyle2D->Numbers.size() - 1]);
+  this->RightRenderer->RemoveViewProp( this->Image2SelectionStyle2D->Points[this->Image2SelectionStyle2D->Points.size() - 1]);
+  this->Image2SelectionStyle2D->Numbers.erase(this->Image2SelectionStyle2D->Numbers.end()-1);
+  this->Image2SelectionStyle2D->Points.erase(this->Image2SelectionStyle2D->Points.end()-1);
+  this->Image2SelectionStyle2D->Coordinates.erase(this->Image2SelectionStyle2D->Coordinates.end()-1);
+  this->qvtkWidgetRight->GetRenderWindow()->Render();
+}
+
+void Form::on_btnDeleteAllImage1_clicked()
+{
+  this->Image1SelectionStyle2D->RemoveAllPoints();
+  this->qvtkWidgetLeft->GetRenderWindow()->Render();
+}
+
+void Form::on_btnDeleteAllImage2_clicked()
+{
+  this->Image2SelectionStyle2D->RemoveAllPoints();
+  this->qvtkWidgetRight->GetRenderWindow()->Render();
+}
+
+void Form::on_actionOpenImage1_activated()
 {
    // Get a filename to open
   QString fileName = QFileDialog::getOpenFileName(this, "Open File", ".", "Image Files (*.png *.mhd *.tif)");
@@ -108,38 +144,38 @@ void Form::on_actionOpenMovingImage_activated()
   reader->SetFileName(fileName.toStdString());
   reader->Update();
   
-  this->MovingImage = reader->GetOutput();
+  this->Image1 = reader->GetOutput();
 
   if(this->chkRGB->isChecked())
     {
-    Helpers::ITKImagetoVTKRGBImage(this->MovingImage, this->MovingImageData);
+    Helpers::ITKImagetoVTKRGBImage(this->Image1, this->Image1Data);
     }
   else
     {
-    Helpers::ITKImagetoVTKMagnitudeImage(this->MovingImage, this->MovingImageData);
+    Helpers::ITKImagetoVTKMagnitudeImage(this->Image1, this->Image1Data);
     }
   
-  this->MovingImageActor->SetInput(this->MovingImageData);
+  this->Image1Actor->SetInput(this->Image1Data);
 
   // Add Actor to renderer
-  this->RightRenderer->AddActor(this->MovingImageActor);
-  this->RightRenderer->ResetCamera();
+  this->LeftRenderer->AddActor(this->Image1Actor);
+  this->LeftRenderer->ResetCamera();
 
   vtkSmartPointer<vtkInteractorStyleImage> interactorStyle =
       vtkSmartPointer<vtkInteractorStyleImage>::New();
-  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
+  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
 
-  this->RightRenderer->ResetCamera();
+  this->LeftRenderer->ResetCamera();
 
   vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
-  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
-  this->MovingPointSelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
-  this->MovingPointSelectionStyle2D->SetCurrentRenderer(this->RightRenderer);
-  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->MovingPointSelectionStyle2D);
+  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  this->Image1SelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
+  this->Image1SelectionStyle2D->SetCurrentRenderer(this->LeftRenderer);
+  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->Image1SelectionStyle2D);
 
 }
 
-void Form::on_actionOpenFixedImage_activated()
+void Form::on_actionOpenImage2_activated()
 {
   // Get a filename to open
   QString fileName = QFileDialog::getOpenFileName(this, "Open File", ".", "Image Files (*.png *.mhd *.tif)");
@@ -156,40 +192,99 @@ void Form::on_actionOpenFixedImage_activated()
   reader->SetFileName(fileName.toStdString());
   reader->Update();
   
-  this->FixedImage = reader->GetOutput();
+  this->Image2 = reader->GetOutput();
 
   if(this->chkRGB->isChecked())
     {
-    Helpers::ITKImagetoVTKRGBImage(this->FixedImage, this->FixedImageData);
+    Helpers::ITKImagetoVTKRGBImage(this->Image2, this->Image2Data);
     }
   else
     {
-    Helpers::ITKImagetoVTKMagnitudeImage(this->FixedImage, this->FixedImageData);
+    Helpers::ITKImagetoVTKMagnitudeImage(this->Image2, this->Image2Data);
     }
   
-  this->FixedImageActor->SetInput(this->FixedImageData);
+  this->Image2Actor->SetInput(this->Image2Data);
 
   // Add Actor to renderer
-  this->LeftRenderer->AddActor(this->FixedImageActor);
-  this->LeftRenderer->ResetCamera();
+  this->RightRenderer->AddActor(this->Image2Actor);
+  this->RightRenderer->ResetCamera();
 
   vtkSmartPointer<vtkInteractorStyleImage> interactorStyle =
       vtkSmartPointer<vtkInteractorStyleImage>::New();
-  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
+  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
 
 
   vtkSmartPointer<vtkPointPicker> pointPicker = vtkSmartPointer<vtkPointPicker>::New();
-  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
-  this->FixedPointSelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
-  this->FixedPointSelectionStyle2D->SetCurrentRenderer(this->LeftRenderer);
-  this->qvtkWidgetLeft->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->FixedPointSelectionStyle2D);
+  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetPicker(pointPicker);
+  this->Image2SelectionStyle2D = vtkSmartPointer<PointSelectionStyle2D>::New();
+  this->Image2SelectionStyle2D->SetCurrentRenderer(this->RightRenderer);
+  this->qvtkWidgetRight->GetRenderWindow()->GetInteractor()->SetInteractorStyle(this->Image2SelectionStyle2D);
   
-  this->LeftRenderer->ResetCamera();
+  this->RightRenderer->ResetCamera();
 
 
 }
 
-void Form::on_actionSave_activated()
+void Form::on_actionSaveImage1Points_activated()
 {
- 
+  if(!this->Image1SelectionStyle2D || !this->Image2SelectionStyle2D)
+    {
+    std::cerr << "You must have loaded and selected points from both images!" << std::endl;
+    return;
+    }
+
+  if(this->Image1SelectionStyle2D->Numbers.size() !=
+     this->Image2SelectionStyle2D->Numbers.size())
+  {
+    std::cerr << "The number of image1 correspondences must match the number of image2 correspondences!" << std::endl;
+    return;
+  }
+
+  QString fileName = QFileDialog::getSaveFileName(this, "Save File", ".", "Text Files (*.txt)");
+  std::cout << "Got filename: " << fileName.toStdString() << std::endl;
+  if(fileName.toStdString().empty())
+    {
+    std::cout << "Filename was empty." << std::endl;
+    return;
+    }
+
+  std::ofstream fout(fileName.toStdString().c_str());
+
+  for(unsigned int i = 0; i < this->Image1SelectionStyle2D->Coordinates.size(); i++)
+    {
+    fout << this->Image1SelectionStyle2D->Coordinates[i].x << " " << this->Image1SelectionStyle2D->Coordinates[i].y << std::endl;
+    }
+  fout.close();
+}
+
+void Form::on_actionSaveImage2Points_activated()
+{
+  if(!this->Image1SelectionStyle2D || !this->Image2SelectionStyle2D)
+    {
+    std::cerr << "You must have loaded and selected points from both images!" << std::endl;
+    return;
+    }
+
+  if(this->Image1SelectionStyle2D->Numbers.size() !=
+     this->Image2SelectionStyle2D->Numbers.size())
+    {
+    std::cerr << "The number of image1 correspondences must match the number of image2 correspondences!" << std::endl;
+    return;
+    }
+
+  QString fileName = QFileDialog::getSaveFileName(this, "Save File", ".", "Text Files (*.txt)");
+  std::cout << "Got filename: " << fileName.toStdString() << std::endl;
+  if(fileName.toStdString().empty())
+    {
+    std::cout << "Filename was empty." << std::endl;
+    return;
+    }
+
+  std::ofstream fout(fileName.toStdString().c_str());
+
+  for(unsigned int i = 0; i < this->Image2SelectionStyle2D->Coordinates.size(); i++)
+    {
+    fout << this->Image2SelectionStyle2D->Coordinates[i].x << " " << this->Image2SelectionStyle2D->Coordinates[i].y << std::endl;
+    }
+  fout.close();
 }

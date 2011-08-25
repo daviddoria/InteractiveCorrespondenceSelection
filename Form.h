@@ -52,27 +52,33 @@ public:
   ~Form() {};
 
 public slots:
-  void on_actionOpenMovingImage_activated();
-  void on_actionOpenFixedImage_activated();
-  void on_actionSave_activated();
+  void on_actionOpenImage1_activated();
+  void on_actionOpenImage2_activated();
+  void on_actionSaveImage1Points_activated();
+  void on_actionSaveImage2Points_activated();
 
+  void on_btnDeleteAllImage1_clicked();
+  void on_btnDeleteAllImage2_clicked();
+  void on_btnDeleteLastImage1_clicked();
+  void on_btnDeleteLastImage2_clicked();
+  
 protected:
 
   vtkSmartPointer<vtkRenderer> LeftRenderer;
   vtkSmartPointer<vtkRenderer> RightRenderer;
   
-  // Fixed image
-  FloatVectorImageType::Pointer FixedImage;
-  vtkSmartPointer<vtkImageActor> FixedImageActor;
-  vtkSmartPointer<vtkImageData> FixedImageData;
+  // Image1
+  FloatVectorImageType::Pointer Image1;
+  vtkSmartPointer<vtkImageActor> Image1Actor;
+  vtkSmartPointer<vtkImageData> Image1Data;
   
-  // Moving image
-  FloatVectorImageType::Pointer MovingImage;
-  vtkSmartPointer<vtkImageActor> MovingImageActor;
-  vtkSmartPointer<vtkImageData> MovingImageData;
+  // Image2
+  FloatVectorImageType::Pointer Image2;
+  vtkSmartPointer<vtkImageActor> Image2Actor;
+  vtkSmartPointer<vtkImageData> Image2Data;
   
-  vtkSmartPointer<PointSelectionStyle2D> FixedPointSelectionStyle2D;
-  vtkSmartPointer<PointSelectionStyle2D> MovingPointSelectionStyle2D;
+  vtkSmartPointer<PointSelectionStyle2D> Image1SelectionStyle2D;
+  vtkSmartPointer<PointSelectionStyle2D> Image2SelectionStyle2D;
 };
 
 #endif // Form_H
